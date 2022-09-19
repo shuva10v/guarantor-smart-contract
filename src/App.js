@@ -43,12 +43,13 @@ function App() {
     load();
   }, [account]);
 
-
-  useEffect(() => {
+  function updateBalance() {
     if (account !== undefined) {
       web3.eth.getBalance(account).then(setBalance);
     }
-  }, [account])
+  }
+
+  useEffect(updateBalance, [account]);
 
   useEffect(() => {
     // TODO
@@ -67,26 +68,34 @@ function App() {
     );
   }
 
-  async function getDeal() {
+  async function getDeal(ignoreErrors) {
     if (account !== undefined && dealId !== undefined) {
       (await contract()).methods.getDeal(dealId).call().then((res) => {
         setDeal(res);
       }).catch((e) => {
         console.log(e);
-        setAlert({text: e.message, severity: 'error'});
+        if (!ignoreErrors) {
+          setAlert({text: e.message, severity: 'error'});
+        }
+        setDeal(undefined);
       })
-    }                      c
+    }
   }
 
   async function dealAction(action) {
     if (account !== undefined && dealId !== undefined) {
       // web3.eth.handleRevert = true;
-      (await contract()).methods[action](dealId).call().then((res) => {
-        setAlert({text: 'Action ' + action + ' finished', severity: 'info'});
-        getDeal();
-      }).catch((e) => {
-        console.log(e);
-        setAlert({text: e.message, severity: 'error'});
+      (await contract()).methods[action](dealId).send({from: account})
+        .on('error', function(error){
+        console.log(error);
+        setAlert({text: error.message, severity: 'error'});
+      }).on('receipt', function(receipt){
+        setAlert({
+          text: "Action " + action + " finished",
+          severity: 'info'
+        });
+        getDeal(true);
+        updateBalance();
       })
     }
   }
@@ -107,7 +116,6 @@ function App() {
       })
         .on('transactionHash', function(transactionHash){ console.log("TX hash", transactionHash) })
         .on('receipt', function(receipt){
-          console.log(receipt.contractAddress); // contains the new contract address
           setCreatingDeal(false);
           setAlert({
             text: "New deal created: #" + receipt?.events?.NewDeal?.returnValues?.dealId,
@@ -153,7 +161,7 @@ function App() {
                 Deal actions
               </FormLabel>
               <TextField label="Deal ID" variant="outlined" onChange={(e) => setDealId(e.target.value)} />
-              <Button variant="contained" onClick={getDeal}>Get deal info</Button>
+              <Button variant="contained" onClick={() => getDeal(false)}>Get deal info</Button>
             </FormControl>
             {deal !== undefined ? (
               <Box sx={{pt:2}}>
@@ -173,7 +181,7 @@ function App() {
                   Status: {deal.approved ? 'Approved' : 'Waiting for guarantor approve'}
                 </Typography>
                 <FormControl margin='dense'>
-                  {account === deal.guarantor ? (<Button variant="contained" onClick={() => dealAction('approve')}>Approve</Button>): null}
+                  {account === deal.guarantor && !deal.approved ? (<Button variant="contained" onClick={() => dealAction('approve')}>Approve</Button>): null}
                   {account === deal.seller && deal.approved ? (<Button variant="contained" onClick={() => dealAction('withdraw')}>Withdraw</Button>): null}
                   {account === deal.seller && !deal.approved? (<Button variant="contained" onClick={() => dealAction('refund')}>Refund</Button>): null}
                 </FormControl>
