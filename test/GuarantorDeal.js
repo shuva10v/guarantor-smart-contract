@@ -1,3 +1,5 @@
+const { balance } = require('@openzeppelin/test-helpers');
+
 const GuarantorDeal = artifacts.require("GuarantorDeal");
 
 contract('GuarantorDeal', (accounts) => {
@@ -73,21 +75,11 @@ contract('GuarantorDeal', (accounts) => {
 
     deal = await instance.getDeal.call(dealId);
     assert.equal(deal.approved, true);
-
-    // const balanceBefore = await web3.eth.getBalance(accounts[1]);
-    // const receipt2 = await instance.withdraw(dealId, {from: accounts[1]})
-    //
-    // const gasUsed = web3.utils.toBN(receipt2.receipt.gasUsed);
-    // console.log(`GasUsed: ${receipt2.receipt.gasUsed}`);
-    //
-    // // Obtain gasPrice from the transaction
-    // const tx = await web3.eth.getTransaction(receipt2.tx);
-    // const gasPrice = web3.utils.toBN(tx.gasPrice);
-    // console.log(`GasPrice: ${tx.gasPrice}`);
-
-    // const balanceAfter = await web3.eth.getBalance(accounts[1]);
-    // very strange vvv
-    // assert.equal(balanceAfter - balanceBefore + gasPrice * gasUsed, dealAmount);
+    
+    const tracker = await balance.tracker(accounts[1]);
+    await instance.withdraw(dealId, {from: accounts[1]});
+    const { delta, fees } = await tracker.deltaWithFees();
+    assert.equal(web3.utils.fromWei(delta.add(fees), 'ether'), '0.3');
   })
 
 });
