@@ -9,11 +9,10 @@ import {
   Box,
   Button,
   CircularProgress,
-  Container,
   FormControl,
   FormLabel,
   Grid,
-  Paper, Snackbar,
+  Snackbar,
   TextField,
   Typography
 } from "@mui/material";
@@ -33,6 +32,7 @@ function App() {
   useEffect(() => {
     async function load() {
       const account = await web3.eth.requestAccounts();
+      console.log(account);
       window.ethereum.on('accountsChanged', function (accounts) {
         setAccount(accounts[0])
       })
@@ -50,11 +50,6 @@ function App() {
   }
 
   useEffect(updateBalance, [account]);
-
-  useEffect(() => {
-    // TODO
-    console.log(dealId);
-  }, [dealId])
 
   function onCloseAlert() {
     setAlert(undefined);
@@ -130,9 +125,9 @@ function App() {
   return (
     <div className="App">
       <Box>
-          <Typography>Your account: {account}</Typography>
+          <Typography color='primary'>Your account: {account}</Typography>
           {balance !== undefined ? (
-            <Typography>Current balance: {web3.utils.fromWei(balance)} ETH</Typography>
+            <Typography color='primary'>Current balance: {web3.utils.fromWei(balance)} ETH</Typography>
           ): null}
       </Box>
       <Grid container spacing={2}>
@@ -165,19 +160,19 @@ function App() {
             </FormControl>
             {deal !== undefined ? (
               <Box sx={{pt:2}}>
-                <Typography>
+                <Typography color='primary'>
                   Seller: {deal.seller}
                 </Typography>
-                <Typography>
+                <Typography color='primary'>
                   Buyer: {deal.buyer}
                 </Typography>
-                <Typography>
+                <Typography color='primary'>
                   Guarantor: {deal.guarantor}
                 </Typography>
-                <Typography>
+                <Typography color='primary'>
                   Amount: {web3.utils.fromWei(deal.amount)} ETH
                 </Typography>
-                <Typography>
+                <Typography color='primary'>
                   Status: {deal.approved ? 'Approved' : 'Waiting for guarantor approve'}
                 </Typography>
                 <FormControl margin='dense'>

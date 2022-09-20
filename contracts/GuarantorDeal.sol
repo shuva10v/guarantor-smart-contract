@@ -18,9 +18,11 @@ contract GuarantorDeal {
     bool approved;
   }
 
+  // deals counter for allocation new dealId
   uint numDeals;
   mapping (uint => Deal) private deals;
 
+  // create new deal
   function create(address payable _seller, address _guarantor) public payable returns (uint) {
     require(msg.value > 0);
     uint dealId = numDeals++;
@@ -48,6 +50,7 @@ contract GuarantorDeal {
     payable(deal.buyer).transfer(amount);
   }
 
+  // simple getter for calls, not for transactions
   function getDeal(uint dealId) external view returns (Deal memory) {
     Deal memory deal = deals[dealId];
     require(deal.amount > 0);
